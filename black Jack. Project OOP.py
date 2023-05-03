@@ -59,25 +59,33 @@ class Hand:
 
 
 class Chips:
-    def __init__(self, total = 100): # значение по умолчанию 100
+    def __init__(self, total = 500): # значение по умолчанию 500
         self.total = total
         self.bet = 0
-    
+
+    def balance(self):
+        return self.total
+
     def win_bet(self):
         self.total += self.bet
         
     def lose_bet(self):
-        self.total -= self.bet 
+        self.total -= self.bet
+        print('Банк {}'.format(self.total))
         
 def take_bet(chips):
     while True:    
         try:
-            chips.bet = int(input('Сколько вы хотите поставить?'))
+            if chips.bet < 0:
+                print('Ставка не может меньше нуля, Амиго. Попробуй, ещё раз')
+            else:
+                print('Твоя ставка?')
+                chips.bet = int(input('> '))
         except:
             print('Извините, введите, пожалуйста, число')
         else:
             if chips.bet > chips.total:
-                print('Сумма больше Вашего банка. Банк составляет {}'.format(chips.total))
+                print('У тебя не хватает денег, Амиго. Твой Банк {}'.format(chips.total))
             else:
                 break
 
@@ -92,7 +100,8 @@ def hit_or_stand(deck, hand):
     global playing
     
     while True:
-        x = input('Взять дополнительную карту (hit) или оставить как есть (stand)? Введите h или s')
+        print('Возьмёшь ещё карту (hit) или тебе хватит (stand)? Введите h или s?')
+        x = input('> ')
         
         if x[0].lower() == 'h':
             hit(deck, hand)
@@ -100,85 +109,79 @@ def hit_or_stand(deck, hand):
             print('Игрок остаётся при текущих картах. Ход дилера')
             playing = False
         else:
-            print('Извините, ответ не ясен. Введите h или s')
+            print('Извини, я не понял. Введите h или s')
             continue
         break
 
 def player_busts(player,deck, hand):
-    print('Превышение суммы 21 для игрока!')
+    print('Перебор! Превышение суммы 21 для игрока!')
     chips.lose_bet()
     
 def player_wins(player,deck, hand):
-    print('Игрок выиграл!')
+    print('Победа, брат! Поздравляю')
     chips.win_bet()
     
 def dealer_busts(player,deck, hand):
-    print('Игрок выиграл! Дилер превысил сумму 21')
+    print('Ты победил, брат! Дилер перебрал за 21')
     chips.win_bet()
 
 def dealer_wins(player,deck, hand):
-    print('Дилер выиграл!')
+    print('Ахтунг, Амиго! У дилера больше. Следующий раз повезёт')
     chips.lose_bet()
     
 def push(player, dealer):
-    print('Ничья!')
+    print('Ничья! Делим пополам')
 
 def show_some(player, dealer):
-    print("Player cards:", *player.cards)
-    print("Dealer cards:", *dealer.cards)
+    print("Твои карты:", *player.cards)
+    print("Карты дилера:", *dealer.cards)
+
+player_chips = Chips() # выдаем фишки игроку (по умолчанию 500)
 
 while True:
+
+
     # пишем приветственное сообщение
-    print('Добро пожаловать в игру')
-    
-    
-    deck = Deck() # Создать и перемешать колоду карт. 
+    print('Добро пожаловать, Амиго. Твой баланс {}'.format(player_chips.balance()))
+
+    take_bet(player_chips) # спрашиваем ставку
+
+    deck = Deck() # Создать и перемешать колоду карт.
     deck.shuffle()
     
-    player_hand = Hand() #Выдать каждому игроку по две карты
+    player_hand = Hand() #Игрок получает карты
     player_hand.add_card(deck.deal())
     player_hand.add_card(deck.deal())
-    print(player_hand.value)
-    
-    dealer_hand = Hand()
+
+    dealer_hand = Hand() #дилер получает карты
     dealer_hand.add_card(deck.deal())
     dealer_hand.add_card(deck.deal())
-    print(dealer_hand.value)
-    
-    #выдаем фишки игроку (по умолчанию 100)
-    player_chips = Chips(500)
-    
-    #спрашиваем ставку
-    
-    take_bet(player_chips)
-    
-    #показываем карты 
-    
+
+    #показываем карты
     show_some(player_hand, dealer_hand)
-    
-    
+    print(player_hand.value)
+    print(dealer_hand.value)
+
     while playing:  # переменная из функции hit or stand
         
         hit_or_stand(deck, player_hand) #предлагаем игроку взять ещё одну карту или оставить как есть
         
-        show_some(player_hand, dealer_hand) #показываем карты, но оставляем одну из карт дилеа скрытой
-        
+        show_some(player_hand, dealer_hand) #показываем карты
+        print(player_hand.value)
+        print(dealer_hand.value)
+
         # Если карт у игрока больше 21 запускаем player_busts и закрываем цикл break
         if player_hand.value>21:
-            print('Превышение суммы 21 для игрока!')
+            print('Перебор брат! Сорян')
             player_chips.lose_bet()
             break
         
         # если не превысили 21, то переходим к картам дилера. берём карты до суммы >=17.
-        
     while dealer_hand.value<17:
             hit(deck, dealer_hand)
             
         # выполняем различные варианты игры
-    if player_hand.value>21:
-        print('Превышение суммы 21 для игрока!')
-        player_chips.lose_bet()
-    elif dealer_hand.value > 21:
+    if dealer_hand.value > 21:
         print('Превышение суммы 21 для дилера! Игрок выиграл')
         player_chips.win_bet()
     elif dealer_hand.value<player_hand.value:
@@ -187,21 +190,20 @@ while True:
     elif dealer_hand.value>player_hand.value:
         print('Дилер выиграл!')
         player_chips.lose_bet()
-
     else:
         print('Ничья!')
-            
-            
+
         # показываем количество фишек игрока
-        
+
     print('Player chips: {}'.format(player_chips.total))
         
         #спрашиваем хочет ли игрок сыграть снова
         
-    new_game = input('Хотите начать новую игру? y или n')
+    print('Ещё партию, брат? y или n?')
+    new_game = input('> ')
     if new_game[0].lower() == 'y':
         playing = True
     else:
-        print('Спасибо за игру!')
+        print('Спасибо за игру, Амиго!')
         break
 
